@@ -3,7 +3,7 @@
     <div class="talk">
       <header>
         <img src="../assets/goback.png" alt="" @click="back" />
-        浙江_杭州
+        {{ city }}
         <div class="status" v-if="status">
           <p></p>
           在线
@@ -15,19 +15,19 @@
       </header>
       <div class="con">
         <p class="time">11:24</p>
-        <div class="you">
+        <div class="you alltxt">
           <img src="../assets/people.png" alt="" />
           <p class="txt">
             您好！很高兴为您服务,看楼盘项目 本人可提供免费接送服务
           </p>
         </div>
-        <div class="peo">
+        <div class="peo alltxt">
           <img src="../assets/talk-peo.png" alt="" />
           <p class="txt">
             您好！很高兴为您服务,看楼盘项目 本人可提供免费接送服务
           </p>
         </div>
-        <div class="peo-pro">
+        <div class="peo-pro alltxt">
           <img src="../assets/talk-peo.png" alt="" />
           <div class="pro">
             <img src="../assets/lun02.jpg" alt="" />
@@ -40,7 +40,7 @@
             </div>
           </div>
         </div>
-        <div class="gettel">
+        <div class="gettel alltxt">
           <img src="../assets/people.png" alt="" class="peoimg" />
           <div class="telbox">
             <img src="../assets/talk-tel.jpg" alt="" />
@@ -53,7 +53,7 @@
             </div>
           </div>
         </div>
-        <div class="putcard">
+        <div class="putcard alltxt">
           <img src="../assets/people.png" alt="" class="peoimg" />
           <div class="cardbox">
             <div class="top">
@@ -80,16 +80,16 @@
             <button>电话咨询</button>
           </div>
         </div>
-        <div class="imgbox">
+        <div class="imgbox alltxt">
           <img src="../assets/people.png" alt="" class="peoimg" />
           <div class="right">
-            <img src="../assets/lun02.jpg" alt="">
+            <img src="../assets/lun02.jpg" alt="" />
           </div>
         </div>
       </div>
       <div class="nav">
         <div class="top">
-          <p :class="txt ? 'active' : ''" @click="txt = !txt">常用语</p>
+          <p :class="txt ? 'active' : ''" @click="add">常用语</p>
           <p :class="teltype ? 'hid' : ''" @click="gettel">要电话</p>
           <p :class="cardtype ? 'hid' : ''" @click="putcard">名片</p>
         </div>
@@ -100,48 +100,48 @@
             v-model="talktxt"
             placeholder="在这输入内容"
           />
-          <img src="../assets/talk-icon.png" alt="" @click="icon = !icon" />
+          <img src="../assets/talk-icon.png" alt="" @click="iconbtn" />
           <img src="../assets/talk-img.png" alt="" v-show="!msg" />
           <input type="file" id="upload" v-show="!msg" />
           <span v-if="msg" @click="send">发送</span>
         </div>
       </div>
       <div class="icons" v-if="icon">
-        <img v-for="item in faces" :key="item.con" :src="item.img" alt @click="seticon(item.con)"/>
+        <img
+          v-for="item in faces"
+          :key="item.con"
+          :src="item.img"
+          alt
+          @click="seticon(item.con)"
+        />
       </div>
       <div class="words" v-if="txt">
-        <div class="word">
-          <div class="txt">
-            <p v-if="type" class="showmsg" @click="settxt('您好，这个楼盘即将开盘主力户型有89.99.124！')">
-              您好，这个楼盘即将开盘主力户型有89.99.124！
-            </p>
-            <div class="ll" v-if="!type">
-              <div
-                class="tt"
-                contenteditable="true"
-                v-text="mm"
-                @keyup="changetxt($event)"
-              ></div>
-              <img src="../assets/talk-del.png" alt="" />
+        <div class="lk">
+          <van-swipe-cell v-for="item in words" :key="item.id">
+            <div class="word">
+              <div class="txt">
+                <p v-if="type" class="showmsg" @click="settxt(item.word)">
+                  {{ item.word }}
+                </p>
+                <div class="ll" v-if="!type">
+                  <div class="tt" v-text="item.word"></div>
+                  <p class="edit" @click="edittxt(item.word, item.id)">编辑</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="txt">
-            <p v-if="type" class="showmsg">
-              您好，这个楼盘即将开盘主力户型有89.99.124！
-            </p>
-            <div class="ll" v-if="!type">
-              <div
-                class="tt"
-                contenteditable="true"
-                v-text="mm"
-                @keyup="changetxt($event)"
-              ></div>
-              <img src="../assets/talk-del.png" alt="" @click="deltxt" />
-            </div>
-          </div>
+            <template #right>
+              <van-button
+                square
+                type="danger"
+                text="删除"
+                class="delete-button"
+                @click.native="del(item.id)"
+              />
+            </template>
+          </van-swipe-cell>
         </div>
         <div class="word-btn">
-          <div class="btn" @click="show = true">
+          <div class="btn" @click="addbtn">
             <img src="../assets/talk.png" alt="" /> 添加
           </div>
           <div class="btn" @click="set">
@@ -161,7 +161,20 @@
           maxlength="50"
         ></textarea>
         <p>{{ addtxtnum }}/50</p>
-        <button>确定</button>
+        <button @click="addword">确定</button>
+      </div>
+    </van-popup>
+    <van-popup v-model="show2" :style="{ background: 'rgba(0,0,0,0)' }">
+      <div class="addtxt">
+        <img src="../assets/w-del.png" alt="" @click="show2 = false" />
+        <h2>编辑常用语</h2>
+        <textarea
+          placeholder="编辑您的常用语"
+          v-model="editmsg"
+          maxlength="50"
+        ></textarea>
+        <p>{{ editmsgnum }}/50</p>
+        <button @click="editword">确定</button>
       </div>
     </van-popup>
     <van-popup v-model="show1" :style="{ background: 'rgba(0,0,0,0)' }">
@@ -170,7 +183,7 @@
         <p class="msg">确定删除当前常用语吗？</p>
         <div class="bom">
           <p @click="show1 = false">取消</p>
-          <p class="btn">确定</p>
+          <p class="btn" @click="delword">确定</p>
         </div>
       </div>
     </van-popup>
@@ -178,6 +191,11 @@
 </template>
 <script>
 export default {
+  props: {
+    ws: {
+      type: Object,
+    },
+  },
   data() {
     return {
       faces: [
@@ -261,6 +279,7 @@ export default {
         "您好，这个楼盘即将开盘主力户型有89.99.124！您好，这个楼盘即将开盘主力户型有89.99.124！您好，这个楼盘即将开盘主力户型有89.99.124！",
       txt: false,
       show: false,
+      show2: false,
       addtxt: "",
       addtxtnum: 0,
       show1: false,
@@ -269,6 +288,18 @@ export default {
       status: false,
       msg: false,
       talktxt: "",
+      editmsg: "",
+      editmsgnum: 0,
+      city: "",
+      staffimg: "",
+      userimg: "",
+      timer: "",
+      words: [],
+      wordid: 0,
+      list: [],
+      total:0,
+      isok:true,
+      page:1
     };
   },
   methods: {
@@ -280,20 +311,21 @@ export default {
       }
       this.type = !this.type;
     },
-    changetxt(e) {
-      console.log(e.target.innerHTML);
-    },
-    deltxt() {
-      this.show1 = true;
+    addbtn() {
+      if (this.words.length < 5) {
+        this.show = true;
+      } else {
+        this.toast("常用语最多5条");
+      }
     },
     gettel() {
       if (!this.teltype) {
         this.teltype = true;
-        let img = require("../assets/people.png");
+        let img = this.staffimg;
         let img1 = require("../assets/talk-tel.jpg");
-          let dv = document.createElement("div");
-          dv.className = "gettel";
-          dv.innerHTML = `
+        let dv = document.createElement("div");
+        dv.className = "gettel alltxt";
+        dv.innerHTML = `
             <img src="${img}" alt="" class="peoimg" />
             <div class="telbox">
               <img src="${img1}" alt="" />
@@ -306,59 +338,44 @@ export default {
               </div>
             </div>
           `;
-          $(".con").append(dv);
-          dv.scrollIntoView();
+        $(".con").append(dv);
+        dv.scrollIntoView();
+        let id = sessionStorage.getItem("userid");
+        let pp = {
+        controller: "chat",
+        action: "send",
+        params: { content: '%get your phone%', username: id },
+      };
+      this.ws.send(JSON.stringify(pp));
       }
     },
     putcard() {
       if (!this.cardtype) {
-        this.cardtype = true;
-        let img = require("../assets/people.png");
-          let dv = document.createElement("div");
-          dv.className = "putcard";
-          dv.innerHTML = `
-            <img src="${img}" alt="" class="peoimg" />
-            <div class="cardbox">
-              <div class="top">
-                <img src="${img}" alt="" />
-                <div class="top-right">
-                  <h5>王烨城 <span>新房咨询</span></h5>
-                  <p>从业咨询服务6年</p>
-                </div>
-              </div>
-              <div class="bom">
-                <div class="txt">
-                  <p class="num"><span>134</span>人</p>
-                  <p class="type">服务客户</p>
-                </div>
-                <div class="txt">
-                  <p class="num"><span>134</span>次</p>
-                  <p class="type">带看客户</p>
-                </div>
-                <div class="txt">
-                  <p class="num"><span>99</span>%</p>
-                  <p class="type">好评率</p>
-                </div>
-              </div>
-              <button>电话咨询</button>
-            </div>
-            `;
-          $(".con").append(dv);
-          dv.scrollIntoView();
+        let id = sessionStorage.getItem("uuid");
+        let pp = {
+          controller: "Staff",
+          action: "info",
+          params: { uuid: id },
+        };
+        this.ws.send(JSON.stringify(pp));
       }
     },
     back() {
       console.log(123);
       this.$router.go(-1);
     },
-    settxt(k){
-      this.talktxt = k
-      this.txt = false
+    settxt(k) {
+      this.talktxt = k;
+      this.txt = false;
+    },
+    iconbtn() {
+      this.icon = !this.icon;
+      this.txt = false;
     },
     send() {
-      let img = require("../assets/people.png");
+      let img = this.staffimg;
       let msg = this.talktxt;
-      let that = this
+      let that = this;
       if (msg.split("face").length !== 0) {
         let index = msg.indexOf("face");
         while (index != -1) {
@@ -377,8 +394,16 @@ export default {
           index = msg.indexOf("face", index + 4);
         }
       }
+      let id = sessionStorage.getItem("userid");
+      let ll = this.talktxt;
+      let pp = {
+        controller: "chat",
+        action: "send",
+        params: { content: ll, username: id },
+      };
+      this.ws.send(JSON.stringify(pp));
       let dv = document.createElement("div");
-      dv.className = "you";
+      dv.className = "you alltxt";
       dv.innerHTML = `
           <img src="${img}" alt="" />
               <p class="txt">
@@ -387,11 +412,88 @@ export default {
         `;
       $(".con").append(dv);
       dv.scrollIntoView();
-      this.talktxt = ''
+      this.talktxt = "";
     },
     seticon(con) {
       this.talktxt = this.talktxt + "face" + con;
       this.icon = false;
+    },
+    edittxt(txt, id) {
+      this.show2 = true;
+      this.editmsgnum = txt.length;
+      this.editmsg = txt;
+      this.wordid = id;
+    },
+    add() {
+      this.txt = !this.txt;
+      this.icon = false;
+    },
+    loadbox(id, userid) {
+      let pp = {
+        controller: "chat",
+        action: "index",
+        params: { staff: id, customer: userid },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    isup(userid) {
+      let pp = {
+        controller: "talker",
+        action: "online_one",
+        params: { uuid: "zhYfTSJ3yQt71602841160013" },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    wordlist(id) {
+      let pp = {
+        controller: "Staff",
+        action: "words",
+        params: { uuid: id },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    addword() {
+      let id = sessionStorage.getItem("uuid");
+      let word = this.addtxt;
+      let pp = {
+        controller: "Staff",
+        action: "add_word",
+        params: { uuid: id, word: word },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    editword() {
+      let id = sessionStorage.getItem("uuid");
+      let wordid = this.wordid;
+      let word = this.editmsg;
+      let pp = {
+        controller: "Staff",
+        action: "add_word",
+        params: { uuid: id, word: word, id: wordid },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    delword() {
+      let id = this.wordid;
+      let pp = {
+        controller: "Staff",
+        action: "delete_words",
+        params: { id: id },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    del(id) {
+      this.show1 = true;
+      this.wordid = id;
+    },
+    record(id, userid) {
+      let page = this.page
+      let pp = {
+        controller: "chat",
+        action: "history",
+        params: { mine: id, customer: userid, page: page, limit: 100 },
+      };
+      this.ws.send(JSON.stringify(pp));
     },
   },
   created() {
@@ -404,15 +506,156 @@ export default {
     }
   },
   mounted() {
+    let that = this;
+    let id = sessionStorage.getItem("uuid");
+    let userid = sessionStorage.getItem("userid");
+    this.ws.onopen = function (event) {
+      that.loadbox(id, userid);
+      that.isup(userid);
+      that.wordlist(id);
+    };
+    if (this.ws.readyState == 1) {
+      if (sessionStorage.getItem("type")) {
+        that.loadbox(id, userid);
+        that.isup(userid);
+        that.wordlist(id);
+      }
+    }
+    that.timer = setInterval(() => {
+      that.isup(userid);
+    }, 3000);
+    that.ws.onmessage = function (event) {
+      let data = JSON.parse(event.data);
+      if (data.action == 305) {
+        console.log(data);
+        that.userimg = data.avatar;
+        that.staffimg = data.staff.head_img;
+        that.city = data.city;
+        that.record(id, userid);
+      } else if (data.action == 304) {
+        if (data.visiting == 1) {
+          that.status = true;
+        } else {
+          that.status = false;
+        }
+      } else if (data.action == 208) {
+        that.words = data.data;
+      } else if (data.action == 207) {
+        that.show = false;
+        that.wordlist(id);
+        that.toast("设置成功");
+        that.addtxt = "";
+        that.show2 = false;
+      } else if (data.action == 209) {
+        that.wordlist(id);
+        that.toast("删除成功");
+        that.show1 = false;
+      } else if (data.action == 303) {
+        if(that.list.length == 0){
+          that.list = data.data.reverse();
+        }else{
+          let list = data.data.reverse();
+          that.list = list.concat(that.list)
+        }
+        that.page = that.page+1
+        that.total = data.total
+        for (let val of that.list) {
+          let msg = val.content;
+          if (msg.split("face").length !== 0) {
+            let index = msg.indexOf("face");
+            while (index != -1) {
+              var reg = /face\[[\u4e00-\u9fa5_a-zA-Z]+\]/s;
+              var match = msg.match(reg);
+              if (match) {
+                var title = match[0].replace("face", "");
+              }
+              for (let val in that.faces) {
+                if (that.faces[val].con == title) {
+                  let img = require(`../assets/${val}.gif`);
+                  let h = `<img src="${img}">`;
+                  msg = msg.replace(`face${title}`, h);
+                }
+              }
+              index = msg.indexOf("face", index + 4);
+            }
+          }
+          let dv = document.createElement("div");
+          if (val.from == userid) {
+            let img = that.userimg;
+            dv.className = "peo alltxt";
+            dv.innerHTML = `
+                    <img src="${img}" alt="" />
+                        <p class="txt">
+                          ${msg}
+                        </p>
+                  `;
+          } else {
+            let img = that.staffimg;
+            dv.className = "you alltxt";
+            dv.innerHTML = `
+                    <img src="${img}" alt="" />
+                        <p class="txt">
+                          ${msg}
+                        </p>
+                  `;
+          }
+          $(".con").append(dv);
+        }
+        if(that.page == 2){
+          let dds = document.getElementsByClassName("alltxt");
+          let dd = dds[dds.length - 1];
+          if (dd) {
+            dd.scrollIntoView();
+          }
+        }
+      } else if (data.action == 206) {
+        that.cardtype = true;
+        let img = that.staffimg;
+        let dv = document.createElement("div");
+        dv.className = "putcard alltxt";
+        dv.innerHTML = `
+            <img src="${img}" alt="" class="peoimg" />
+            <div class="cardbox">
+              <div class="top">
+                <img src="${img}" alt="" />
+                <div class="top-right">
+                  <h5>${data.staff.name} <span>新房咨询</span></h5>
+                  <p>从业咨询服务6年</p>
+                </div>
+              </div>
+              <div class="bom">
+                <div class="txt">
+                  <p class="num"><span>${data.num.user_num}</span>人</p>
+                  <p class="type">服务客户</p>
+                </div>
+                <div class="txt">
+                  <p class="num"><span>${data.num.look_num}</span>次</p>
+                  <p class="type">带看客户</p>
+                </div>
+                <div class="txt">
+                  <p class="num"><span>${data.num.rate}</span>%</p>
+                  <p class="type">好评率</p>
+                </div>
+              </div>
+              <a href="tel:${data.staff.tel}">
+              <button>电话咨询</button>
+              </a>
+            </div>
+            `;
+        $(".con").append(dv);
+        dv.scrollIntoView();
+      }
+    };
+
     document.getElementById("upload").addEventListener("change", function (e) {
       var file = event.currentTarget.files[0];
       if ((file.size / 1000).toFixed(0) < 2000) {
         let r = new FileReader(); //本地预览
         r.onload = function (e) {
           var imgFile = e.target.result; //或e.target都是一样的
-          let img = require("../assets/people.png");
+          let img = that.staffimg;
           let dv = document.createElement("div");
-          dv.className = "imgbox";
+          dv.className = "imgbox alltxt";
           dv.innerHTML = `
             <img src="${img}" alt="" class="peoimg" />
             <div class="right">
@@ -422,12 +665,30 @@ export default {
           let ig = ``;
           $(".con").append(dv);
           dv.scrollIntoView();
+          let ll = `img[${imgFile}]`;
+          let pp = {
+            controller: "chat",
+            action: "send",
+            params: { content: ll, username: id },
+          };
+          that.ws.send(JSON.stringify(pp));
         };
         let base = r.readAsDataURL(file);
       } else {
         this.toast("请不要上传超过2M的图片");
       }
     });
+    $('.con').on('scroll',function(){
+      if ($(this).scrollTop() == 0) {
+        console.log(456)
+        if(that.isok && that.total>100*that.page){
+          that.isok = false
+          let id = sessionStorage.getItem('uuid')
+          let userid = sessionStorage.getItem('userid')
+          that.record(id,userid)
+        }
+      }
+    })
   },
   watch: {
     addtxt(val) {
@@ -440,6 +701,12 @@ export default {
         this.msg = false;
       }
     },
+    editmsg(val) {
+      console.log(val);
+    },
+  },
+  beforeDestroy() {
+    clearInterval(this.timer);
   },
 };
 </script>
@@ -507,6 +774,7 @@ header {
       width: 2.5rem;
       margin-left: 1rem;
       height: 2.5rem;
+      border-radius: 50%;
     }
     .txt {
       color: #fff;
@@ -852,11 +1120,16 @@ header {
   }
 }
 .words {
-  padding: 0 4%;
   height: 16.75rem;
-  .word {
+  /deep/.delete-button {
+    height: 100%;
+  }
+  .lk {
     height: 13.25rem;
     overflow-y: auto;
+  }
+  .word {
+    padding: 0 4%;
     .txt {
       color: #313133;
       font-size: 0.8125rem;
@@ -880,6 +1153,10 @@ header {
       img {
         width: 1.5rem;
         height: 1.5rem;
+      }
+      .edit {
+        color: #52c2cc;
+        font-size: 0.8125rem;
       }
     }
   }

@@ -1,64 +1,142 @@
 <template>
   <div class="VisitorDetail">
     <header>
-      <img src="../assets/goback.png" alt="" @click="back"/>
+      <img src="../assets/goback.png" alt="" @click="back" />
       访客详情
     </header>
     <div class="con">
       <div class="card">
         <div class="card-top">
-          <img src="../assets/peo.png" alt="" />
-          <span class="city">浙江_杭州</span>
+          <img :src="msg.avatar" alt="" />
+          <span class="city">{{ msg.city }}</span>
           <span class="type" v-if="istalk">已被邀请</span>
-          <span class="status" v-if="isup">访问中</span>
-          <span class="status1" v-if="!isup">已离开</span>
+          <span class="status" v-if="msg.visiting == 1">访问中</span>
+          <span class="status1" v-if="msg.visiting == 0">已离开</span>
         </div>
-        <p class="cardinfo">访客ID <span> 81345736457346544</span></p>
-        <p class="cardinfo">IP地址 <span> 115.220.188.246 </span></p>
+        <p class="cardinfo">
+          访客ID <span> {{ msg.username }}</span>
+        </p>
+        <p class="cardinfo">
+          IP地址 <span> {{ msg.ip }} </span>
+        </p>
       </div>
       <h2>访客记录</h2>
       <ul>
-        <li>访问项目 <span>临安宝龙广场</span></li>
-        <li>访问时间 <span>2020-09-22 08:23:56</span></li>
-        <li>离开时间 <span>-</span></li>
-        <li>访问页数 <span>1页</span></li>
+        <li>
+          访问项目 <span>{{ msg.project }}</span>
+        </li>
+        <li>
+          访问时间 <span>{{ msg.time }}</span>
+        </li>
+        <li>
+          离开时间 <span>{{ msg.leave ? msg.leave : "-" }}</span>
+        </li>
+        <li>
+          访问页数 <span>{{ msg.page_num }}页</span>
+        </li>
       </ul>
     </div>
     <div class="bom1" v-if="!istalk">
-      <button :class="!isup?'btn':''" @click="gotalk">{{ btnmsg }}</button>
+      <button :class="!msg.visiting == 1 ? 'btn' : ''" @click="gotalk">
+        {{ btnmsg }}
+      </button>
     </div>
   </div>
 </template>
 <script>
 export default {
+  props: {
+    ws: {
+      type: Object,
+    },
+  },
   data() {
     return {
       btnmsg: "进入聊天",
-      isup:true,
-      istalk:false
+      isup: true,
+      istalk: false,
+      msg: {},
+      status: 0,
     };
   },
-  methods:{
+  methods: {
     back() {
-      this.$router.go(-1)
+      this.$router.go(-1);
     },
-    gotalk(){
-      let status = 1
-      if(status == 1){
+    gotalk() {
+      let userid = this.msg.username
+      sessionStorage.removeItem(userid)
+      if(!this.istalk){
         this.$router.push('/talk')
       }else{
-        this.toast('访客已被沟通')
+        this.toast('客户已被沟通')
       }
-      
+    },
+    detail(id) {
+      let pp = {
+        controller: "Talker",
+        action: "customer",
+        params: { uuid: id },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    talk(id, userid) {
+      let pp = {
+        controller: "Talker",
+        action: "occupy",
+        params: { uuid: id, customer: userid },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+  },
+  mounted() {
+    let useid = sessionStorage.getItem("userid");
+    let id = sessionStorage.getItem("uuid");
+    let that = this;
+    this.ws.onopen = function (event) {
+      that.detail(useid);
+      that.talk(id, useid);
+    };
+    if (this.ws.readyState == 1) {
+      if (sessionStorage.getItem("type")) {
+        that.detail(useid);
+        that.talk(id, useid);
+      }
+    }
+    that.ws.onmessage = function (event) {
+      let data = JSON.parse(event.data);
+      if (data.action == 203) {
+        that.msg = data.info;
+      } else if (data.action == 306) {
+        if (data.result == "success") {
+          that.istalk = false;
+        } else {
+          that.istalk = true;
+        }
+        let status = that.status;
+        if (status == 1) {
+          if (data.result == "success") {
+            that.$router.push("/talk");
+          } else {
+            that.toast("访客已被沟通");
+          }
+        }
+      } else if (data.action == 301) {
+        let num = 0;
+        if (sessionStorage.getItem(data.fromUserName)) {
+          num = parseInt(sessionStorage.getItem(data.fromUserName)) + 1;
+        } else {
+          num = 1;
+        }
+        sessionStorage.setItem(data.fromUserName, num);
+      }
+    };
+    if (sessionStorage.getItem("type") == 2) {
+      this.btnmsg = "进入聊天";
+    } else {
+      this.btnmsg = "开始沟通";
     }
   },
-  created(){
-    if(sessionStorage.getItem('type') == 2){
-      this.btnmsg = '进入聊天'
-    }else{
-      this.btnmsg = '开始沟通'
-    }
-  }
 };
 </script>
 <style lang="less" scoped>

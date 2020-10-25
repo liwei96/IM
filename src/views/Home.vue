@@ -6,79 +6,55 @@
         访客接待
       </header>
       <ul class="nav">
-        <li :class="type == 1 ?'active':''" @click="change(1)">访客<span></span></li>
-        <li :class="type == 2 ?'active':''" @click="change(2)">
+        <li :class="type == 1 ? 'active' : ''" @click="change(1)">
+          访客<span></span>
+        </li>
+        <li :class="type == 2 ? 'active' : ''" @click="change(2)">
           沟通<span></span>
           <p v-if="num"><i>...</i></p>
         </li>
       </ul>
     </div>
     <div class="con">
-      <div class="peo">
-        <img class="peoimg" :src="mup" alt="" @click="godetail" />
-        <div class="right" @click="gotalk(0)">
-          <p class="topmsg">
-            浙江_杭州
-            <span class="type">已被接待</span>
-            <span class="time">11:24</span>
-          </p>
-          <div class="bommsg">
-            <span>访问1页</span>
-            <span class="org">临安宝龙广场</span>
-            <img src="../assets/talk.png" alt="" />
+      <template v-if="type == 1">
+        <div class="peo" v-for="item in listmsg" :key="item.id">
+          <img class="peoimg" :src="mup" alt="" @click="godetail(item.uuid)" />
+          <div class="right" @click="istalk(item.uuid)">
+            <p class="topmsg">
+              {{ item.city }}
+              <!-- <span class="type">已被接待</span> -->
+              <span class="time">{{ item.time }}</span>
+            </p>
+            <div class="bommsg">
+              <span>访问项目</span>
+              <span class="org">{{ item.name }}</span>
+              <img :src="item.url" alt="" />
+            </div>
+            <p class="line"></p>
           </div>
-          <p class="line"></p>
         </div>
-      </div>
-      <div class="peo">
-        <img class="peoimg" :src="mdown" alt="" />
-        <div class="right" @click="gotalk(1)">
-          <p class="topmsg">
-            浙江_杭州
-            <span class="time">11:24</span>
-          </p>
-          <div class="bommsg">
-            <span>访问1页</span>
-            <span class="org">临安宝龙广场</span>
-            <img src="../assets/talk.png" alt="" />
+      </template>
+      <template v-if="type == 2">
+        <div class="peo" v-for="item in commlist" :key="item.uuid">
+          <div class="left" @click="godetail(item.uuid)">
+            <img class="peoimg" :src="item.avatar" alt="" />
+            <p v-if="item.num">{{ item.num }}</p>
           </div>
-          <p class="line"></p>
-        </div>
-      </div>
-      <div class="peo">
-        <img class="peoimg" :src="pcup" alt="" />
-        <div class="right">
-          <p class="topmsg">
-            浙江_杭州
-            <span class="time">11:24</span>
-          </p>
-          <div class="bommsg">
-            <span>访问1页</span>
-            <span class="org">临安宝龙广场</span>
-            <img src="../assets/talk.png" alt="" />
+          <div class="right" @click="istalk(item.uuid)">
+            <p class="topmsg">
+              {{ item.city }}
+              <span class="time">{{ item.time }}</span>
+            </p>
+            <div class="bommsg" v-if="false">
+              <span>访问1页</span>
+              <span class="org">{{ item.project }}</span>
+              <img src="../assets/talk.png" alt="" />
+            </div>
+            <p class="response">{{ item.content }}</p>
+            <p class="line"></p>
           </div>
-          <p class="line"></p>
         </div>
-      </div>
-      <div class="peo">
-        <div class="left">
-          <img class="peoimg" :src="pcdown" alt="" />
-          <p>1</p>
-        </div>
-        <div class="right">
-          <p class="topmsg">
-            浙江_杭州
-            <span class="time">11:24</span>
-          </p>
-          <div class="bommsg" v-if="false">
-            <span>访问1页</span>
-            <span class="org">临安宝龙广场</span>
-            <img src="../assets/talk.png" alt="" />
-          </div>
-          <p class="response">您好，我想咨询临安宝龙广场详情</p>
-          <p class="line"></p>
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -86,6 +62,11 @@
 <script>
 export default {
   name: "Home",
+  props: {
+    ws: {
+      type: Object,
+    },
+  },
   data() {
     return {
       mup: require("../assets/mpeo-up.png"),
@@ -94,29 +75,152 @@ export default {
       pcdown: require("../assets/pcpeo-down.png"),
       status: 1,
       num: false,
-      type:1
+      type: 1,
+      listmsg: [],
+      id: 0,
+      commlist: [],
+      timer: "",
+      nums: 0,
     };
   },
   methods: {
-    godetail() {
+    godetail(uuid) {
       this.$router.push("/VisitorDetail");
-    },
-    gotalk(type) {
-      if (type == 1) {
-        this.$router.push("/talk");
-      } else {
-        this.toast("客户已被沟通");
-      }
+      sessionStorage.setItem("userid", uuid);
     },
     change(type) {
-      if(type ==1){
-        this.type = 1
-        
-      }else{
-        this.type =2
+      if (type == 1) {
+        this.type = 1;
+      } else {
+        this.type = 2;
       }
-      sessionStorage.setItem('type',type)
+      sessionStorage.setItem("type", type);
+    },
+    list(id) {
+      let pp = {
+        controller: "Talker",
+        action: "my_onlines",
+        params: { uuid: id },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    comments(id) {
+      let pp = {
+        controller: "Talker",
+        action: "mine",
+        params: { uuid: id },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+    istalk(userid) {
+      let id = sessionStorage.getItem("uuid");
+      sessionStorage.removeItem(userid)
+      let pp = {
+        controller: "Talker",
+        action: "occupy",
+        params: { uuid: id, customer: userid },
+      };
+      this.ws.send(JSON.stringify(pp));
+    },
+  },
+  mounted() {
+    this.id = sessionStorage.getItem("uuid");
+    let that = this;
+    console.log(this.ws);
+    this.ws.onopen = function (event) {
+      that.list(that.id);
+      that.comments(that.id);
+    };
+    console.log(this.ws.readyState);
+    if (this.ws.readyState == 1) {
+      if (sessionStorage.getItem("type")) {
+        that.list(that.id);
+        that.comments(that.id);
+      }
     }
+    that.timer = setInterval(() => {
+      that.list(that.id);
+      // that.comments(that.id);
+    }, 5000);
+    that.ws.onmessage = function (event) {
+      let data = JSON.parse(event.data);
+      if (data.action == 205) {
+        let date = new Date();
+        for (let val of data.users) {
+          let dd = new Date(val.createtime);
+          let time = date - dd;
+          if (time / 1000 < 3600 * 24) {
+            val.time =
+              (dd.getHours() >= 10 ? dd.getHours() : "0" + dd.getHours()) +
+              ":" +
+              (dd.getMinutes() >= 10 ? dd.getMinutes() : "0" + dd.getMinutes());
+          } else {
+            val.time =
+              dd.getFullYear() +
+              "-" +
+              (dd.getMonth() + 1 >= 10
+                ? dd.getMonth() + 1
+                : "0" + (dd.getMonth() + 1)) +
+              "-" +
+              (dd.getDate() >= 10 ? dd.getDate() : "0" + dd.getDate());
+          }
+          console.log(time);
+        }
+        that.listmsg = data.users;
+      } else if (data.action == 308) {
+        let date = new Date();
+        for (let val of data.list) {
+          let dd = new Date(val.time);
+          let time = date - dd;
+          if (time / 1000 < 3600 * 24) {
+            val.time =
+              (dd.getHours() >= 10 ? dd.getHours() : "0" + dd.getHours()) +
+              ":" +
+              (dd.getMinutes() >= 10 ? dd.getMinutes() : "0" + dd.getMinutes());
+          } else {
+            val.time =
+              dd.getFullYear() +
+              "-" +
+              (dd.getMonth() + 1 >= 10
+                ? dd.getMonth() + 1
+                : "0" + (dd.getMonth() + 1)) +
+              "-" +
+              (dd.getDate() >= 10 ? dd.getDate() : "0" + dd.getDate());
+          }
+          if(sessionStorage.getItem(val.uuid)){
+            val.num = sessionStorage.getItem(val.uuid)
+            that.num = true
+          }
+        }
+        that.commlist = data.list;
+      } else if (data.action == 306) {
+        that.num = false;
+        if (data.result == "success") {
+          that.$router.push("/talk");
+        } else {
+          that.toast("客户已被沟通");
+        }
+      } else if (data.action == 301) {
+        that.num = true;
+        let num = 0;
+        if (sessionStorage.getItem(data.fromUserName)) {
+          num = parseInt(sessionStorage.getItem(data.fromUserName)) + 1;
+        } else {
+          num = 1;
+        }
+        sessionStorage.setItem(data.fromUserName, num);
+        for(let val of that.commlist) {
+          if(val.uuid == data.fromUserName) {
+            val.num = num
+          }
+        }
+      }
+      console.log(that.commlist);
+    };
+  },
+  beforeDestroy() {
+    console.log(45);
+    clearInterval(this.timer);
   },
 };
 </script>
@@ -198,7 +302,7 @@ header {
         border-radius: 50%;
         text-align: center;
         line-height: 1rem;
-        background-color: #F24949;
+        background-color: #f24949;
         color: #fff;
         font-size: 0.6875rem;
         position: absolute;
@@ -250,6 +354,11 @@ header {
       .response {
         color: #7d7d80;
         font-size: 0.8125rem;
+        width: 17.5rem;
+        height: 1.125rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .line {
         width: 17.625rem;

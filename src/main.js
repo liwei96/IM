@@ -2,9 +2,11 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import { Popup } from 'vant';
+import { Popup,SwipeCell,Button   } from 'vant';
 
 Vue.use(Popup);
+Vue.use(SwipeCell);
+Vue.use(Button);
 
 Vue.config.productionTip = false
 import toast from '@/components/toast.vue'
