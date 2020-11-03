@@ -2,7 +2,11 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import { Popup,SwipeCell,Button   } from 'vant';
+import {
+  Popup,
+  SwipeCell,
+  Button
+} from 'vant';
 
 Vue.use(Popup);
 Vue.use(SwipeCell);
@@ -15,14 +19,14 @@ const toastHonor = Vue.extend(toast);
 
 let toasts = function (msg = '', callback, timeout = 1500) {
   let LoadingTip = Vue.extend(toast)
-    LoadingTip.msg = msg
-    console.log(msg)
+  LoadingTip.msg = msg
+  console.log(msg)
   // 2、创建实例，挂载到文档以后的地方
   let tpl = new LoadingTip({
-    data:{
-        msg:msg
+    data: {
+      msg: msg
     }
-}).$mount().$el
+  }).$mount().$el
   // 3、把创建的实例添加到body中
   document.body.appendChild(tpl);
 

@@ -17,18 +17,20 @@
     </div>
     <div class="con">
       <template v-if="type == 1">
-        <div class="peo" v-for="item in listmsg" :key="item.id">
-          <img class="peoimg" :src="mup" alt="" @click="godetail(item.uuid)" />
+        <div class="peo" v-for="(item, key) in listmsg" :key="key">
+          <div class="left">
+            <img class="peoimg" :src="mup" alt="" @click="godetail(item.uuid)" />
+            <p v-if="item.num">{{item.num}}</p>
+          </div>
           <div class="right" @click="istalk(item.uuid)">
             <p class="topmsg">
               {{ item.city }}
-              <!-- <span class="type">已被接待</span> -->
+              <span class="type" v-if="item.connected === 1">已沟通过</span>
               <span class="time">{{ item.time }}</span>
             </p>
             <div class="bommsg">
               <span>访问项目</span>
               <span class="org">{{ item.name }}</span>
-              <img :src="item.url" alt="" />
             </div>
             <p class="line"></p>
           </div>
@@ -37,7 +39,7 @@
       <template v-if="type == 2">
         <div class="peo" v-for="item in commlist" :key="item.uuid">
           <div class="left" @click="godetail(item.uuid)">
-            <img class="peoimg" :src="item.avatar" alt="" />
+            <img class="peoimg" :src="item.visiting===0?mdown:mup" alt="" />
             <p v-if="item.num">{{ item.num }}</p>
           </div>
           <div class="right" @click="istalk(item.uuid)">
@@ -45,11 +47,6 @@
               {{ item.city }}
               <span class="time">{{ item.time }}</span>
             </p>
-            <div class="bommsg" v-if="false">
-              <span>访问1页</span>
-              <span class="org">{{ item.project }}</span>
-              <img src="../assets/talk.png" alt="" />
-            </div>
             <p class="response">{{ item.content }}</p>
             <p class="line"></p>
           </div>
@@ -113,8 +110,9 @@ export default {
       this.ws.send(JSON.stringify(pp));
     },
     istalk(userid) {
-      let id = sessionStorage.getItem("uuid");
       sessionStorage.removeItem(userid)
+      let id = sessionStorage.getItem("uuid");
+      sessionStorage.setItem('userid',userid)
       let pp = {
         controller: "Talker",
         action: "occupy",
@@ -138,9 +136,10 @@ export default {
         that.comments(that.id);
       }
     }
+    console.log(this.ws.readyState)
     that.timer = setInterval(() => {
       that.list(that.id);
-      // that.comments(that.id);
+      that.comments(that.id);
     }, 5000);
     that.ws.onmessage = function (event) {
       let data = JSON.parse(event.data);
@@ -164,7 +163,9 @@ export default {
               "-" +
               (dd.getDate() >= 10 ? dd.getDate() : "0" + dd.getDate());
           }
-          console.log(time);
+          if(sessionStorage.getItem(val.uuid)){
+            val.num = sessionStorage.getItem(val.uuid)
+          }
         }
         that.listmsg = data.users;
       } else if (data.action == 308) {
@@ -201,7 +202,6 @@ export default {
           that.toast("客户已被沟通");
         }
       } else if (data.action == 301) {
-        that.num = true;
         let num = 0;
         if (sessionStorage.getItem(data.fromUserName)) {
           num = parseInt(sessionStorage.getItem(data.fromUserName)) + 1;
@@ -212,10 +212,16 @@ export default {
         for(let val of that.commlist) {
           if(val.uuid == data.fromUserName) {
             val.num = num
+            that.num = true;
           }
         }
+        for(let val of that.listmsg) {
+          if(val.uuid == data.fromUserName) {
+            val.num = num
+          }
+        }
+        console.log(that.listmsg)
       }
-      console.log(that.commlist);
     };
   },
   beforeDestroy() {

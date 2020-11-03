@@ -14,9 +14,11 @@
         </div>
       </header>
       <div class="con">
-        <p class="time">11:24</p>
-        <div class="you alltxt">
-          <img src="../assets/people.png" alt="" />
+        <p class="time">{{ time }}</p>
+        <!-- <div class="you alltxt">
+          <div class="left">
+            <img src="../assets/people.png" alt="" />
+          </div>
           <p class="txt">
             您好！很高兴为您服务,看楼盘项目 本人可提供免费接送服务
           </p>
@@ -32,7 +34,7 @@
           <div class="pro">
             <img src="../assets/lun02.jpg" alt="" />
             <div class="pro-msg">
-              <p class="name">临安宝龙广场</p>
+              <p class="name">{{pro.name}}</p>
               <p class="area">建面 80-120/m²</p>
               <p class="price">
                 均价<span><i>25000</i>元/m²</span>
@@ -85,7 +87,7 @@
           <div class="right">
             <img src="../assets/lun02.jpg" alt="" />
           </div>
-        </div>
+        </div> -->
       </div>
       <div class="nav">
         <div class="top">
@@ -297,9 +299,17 @@ export default {
       words: [],
       wordid: 0,
       list: [],
-      total:0,
-      isok:true,
-      page:1
+      total: 0,
+      isok: true,
+      page: 1,
+      time: "",
+      pro: {},
+      staffname: "",
+      totalnum: 0,
+      usernum: 0,
+      looknum: 0,
+      rate: 0,
+      stafftel: "",
     };
   },
   methods: {
@@ -342,22 +352,57 @@ export default {
         dv.scrollIntoView();
         let id = sessionStorage.getItem("userid");
         let pp = {
-        controller: "chat",
-        action: "send",
-        params: { content: '%get your phone%', username: id },
-      };
-      this.ws.send(JSON.stringify(pp));
+          controller: "chat",
+          action: "send",
+          params: { content: "%get your phone%", username: id },
+        };
+        this.ws.send(JSON.stringify(pp));
       }
     },
     putcard() {
       if (!this.cardtype) {
-        let id = sessionStorage.getItem("uuid");
-        let pp = {
-          controller: "Staff",
-          action: "info",
-          params: { uuid: id },
+        this.cardtype = true;
+        let img = this.staffimg;
+        let dv = document.createElement("div");
+        dv.className = "putcard alltxt";
+        dv.innerHTML = `
+            <img src="${img}" alt="" class="peoimg" />
+            <div class="cardbox">
+              <div class="top">
+                <img src="${img}" alt="" />
+                <div class="top-right">
+                  <h5>${this.staffname} <span>新房咨询</span></h5>
+                  <p>从业咨询服务6年</p>
+                </div>
+              </div>
+              <div class="bom">
+                <div class="txt">
+                  <p class="num"><span>${this.usernum}</span>人</p>
+                  <p class="type">服务客户</p>
+                </div>
+                <div class="txt">
+                  <p class="num"><span>${this.looknum}</span>次</p>
+                  <p class="type">带看客户</p>
+                </div>
+                <div class="txt">
+                  <p class="num"><span>${this.rate}</span>%</p>
+                  <p class="type">好评率</p>
+                </div>
+              </div>
+              <a href="tel:${this.stafftel}">
+              <button>电话咨询</button>
+              </a>
+            </div>
+            `;
+        $(".con").append(dv);
+        dv.scrollIntoView();
+        let userid = sessionStorage.getItem("userid");
+        let oo = {
+          controller: "chat",
+          action: "send",
+          params: { content: "%put my card%", username: userid },
         };
-        this.ws.send(JSON.stringify(pp));
+        this.ws.send(JSON.stringify(oo));
       }
     },
     back() {
@@ -405,7 +450,9 @@ export default {
       let dv = document.createElement("div");
       dv.className = "you alltxt";
       dv.innerHTML = `
-          <img src="${img}" alt="" />
+                    <div class="left">
+                        <img src="${img}" alt="" />
+                      </div>
               <p class="txt">
                 ${msg}
               </p>
@@ -440,7 +487,7 @@ export default {
       let pp = {
         controller: "talker",
         action: "online_one",
-        params: { uuid: "zhYfTSJ3yQt71602841160013" },
+        params: { uuid: userid },
       };
       this.ws.send(JSON.stringify(pp));
     },
@@ -487,7 +534,7 @@ export default {
       this.wordid = id;
     },
     record(id, userid) {
-      let page = this.page
+      let page = this.page;
       let pp = {
         controller: "chat",
         action: "history",
@@ -513,12 +560,24 @@ export default {
       that.loadbox(id, userid);
       that.isup(userid);
       that.wordlist(id);
+      let pp = {
+        controller: "Staff",
+        action: "info",
+        params: { uuid: id },
+      };
+      that.ws.send(JSON.stringify(pp));
     };
     if (this.ws.readyState == 1) {
       if (sessionStorage.getItem("type")) {
         that.loadbox(id, userid);
         that.isup(userid);
         that.wordlist(id);
+        let pp = {
+          controller: "Staff",
+          action: "info",
+          params: { uuid: id },
+        };
+        that.ws.send(JSON.stringify(pp));
       }
     }
     that.timer = setInterval(() => {
@@ -532,6 +591,27 @@ export default {
         that.staffimg = data.staff.head_img;
         that.city = data.city;
         that.record(id, userid);
+        let pro = data.project_info;
+        if(pro.length>0){
+          let txt = `
+            <img src="${that.userimg}" alt="" />
+          <div class="pro">
+            <img src="${pro.img}" alt="" />
+            <div class="pro-msg">
+              <p class="name">${pro.name}</p>
+              <p class="area">建面 ${pro.area}/m²</p>
+              <p class="price">
+                均价<span><i>${pro.price}</i>元/m²</span>
+              </p>
+            </div>
+          </div>
+          `;
+        let dv = document.createElement("div");
+        dv.innerHTML = txt;
+        dv.className = "peo-pro alltxt";
+        $(".con").append(dv);
+        dv.scrollIntoView();
+        }
       } else if (data.action == 304) {
         if (data.visiting == 1) {
           that.status = true;
@@ -551,99 +631,287 @@ export default {
         that.toast("删除成功");
         that.show1 = false;
       } else if (data.action == 303) {
-        if(that.list.length == 0){
+        let nn = 0;
+        if (that.list.length == 0) {
           that.list = data.data.reverse();
-        }else{
+        } else {
           let list = data.data.reverse();
-          that.list = list.concat(that.list)
+          nn = list.length - 1;
+          that.list = list.concat(that.list);
         }
-        that.page = that.page+1
-        that.total = data.total
+        let dd = new Date();
+        if (that.list[0]) {
+          dd = new Date(that.list[0].createtime);
+        }
+        let date = new Date();
+        let time = date - dd;
+        if (time / 1000 < 3600 * 24) {
+          that.time =
+            (dd.getHours() >= 10 ? dd.getHours() : "0" + dd.getHours()) +
+            ":" +
+            (dd.getMinutes() >= 10 ? dd.getMinutes() : "0" + dd.getMinutes());
+        } else {
+          that.time =
+            dd.getFullYear() +
+            "-" +
+            (dd.getMonth() + 1 >= 10
+              ? dd.getMonth() + 1
+              : "0" + (dd.getMonth() + 1)) +
+            "-" +
+            (dd.getDate() >= 10 ? dd.getDate() : "0" + dd.getDate());
+        }
+        that.page = that.page + 1;
+        that.total = data.total;
         for (let val of that.list) {
           let msg = val.content;
-          if (msg.split("face").length !== 0) {
-            let index = msg.indexOf("face");
-            while (index != -1) {
-              var reg = /face\[[\u4e00-\u9fa5_a-zA-Z]+\]/s;
-              var match = msg.match(reg);
-              if (match) {
-                var title = match[0].replace("face", "");
-              }
-              for (let val in that.faces) {
-                if (that.faces[val].con == title) {
-                  let img = require(`../assets/${val}.gif`);
-                  let h = `<img src="${img}">`;
-                  msg = msg.replace(`face${title}`, h);
-                }
-              }
-              index = msg.indexOf("face", index + 4);
-            }
-          }
-          let dv = document.createElement("div");
-          if (val.from == userid) {
-            let img = that.userimg;
-            dv.className = "peo alltxt";
-            dv.innerHTML = `
-                    <img src="${img}" alt="" />
-                        <p class="txt">
-                          ${msg}
-                        </p>
-                  `;
-          } else {
+          if (msg == "%get your phone%") {
             let img = that.staffimg;
-            dv.className = "you alltxt";
+            let mm = require("../assets/talk-tel.jpg");
+            let dv = document.createElement("div");
+            dv.className = "gettel alltxt";
             dv.innerHTML = `
+              <img src="${img}" alt="" class="peoimg" />
+              <div class="telbox">
+                <img src="${mm}" alt="" />
+                <div class="telbox-bom">
+                  <p class="tit">为您制定专属分析报告</p>
+                  <p class="msg">
+                    向咨询师免费领取专属分析报告,内附有购房 流程全盘解读
+                  </p>
+                  <button class="mfbtn">免费领取</button>
+                </div>
+              </div>
+              `;
+            $(".con").append(dv);
+          } else if (msg == "%put my card%") {
+            let img = that.staffimg;
+            let dv = document.createElement("div");
+            dv.className = "putcard alltxt";
+            dv.innerHTML = `
+              <img src="${img}" alt="" class="peoimg" />
+              <div class="cardbox">
+                <div class="top">
+                  <img src="${img}" alt="" />
+                  <div class="top-right">
+                    <h5>${that.staffname} <span>新房咨询</span></h5>
+                    <p>从业咨询服务6年</p>
+                  </div>
+                </div>
+                <div class="bom">
+                  <div class="txt">
+                    <p class="num"><span>${that.usernum}</span>人</p>
+                    <p class="type">服务客户</p>
+                  </div>
+                  <div class="txt">
+                    <p class="num"><span>${that.looknum}</span>次</p>
+                    <p class="type">带看客户</p>
+                  </div>
+                  <div class="txt">
+                    <p class="num"><span>${that.rate}</span>%</p>
+                    <p class="type">好评率</p>
+                  </div>
+                </div>
+                <a href="tel:${that.stafftel}">
+                <button>电话咨询</button>
+                </a>
+              </div>
+              `;
+            $(".con").append(dv);
+          } else {
+            if (msg.split("face").length !== 0) {
+              let index = msg.indexOf("face");
+              while (index != -1) {
+                var reg = /face\[[\u4e00-\u9fa5_a-zA-Z]+\]/s;
+                var match = msg.match(reg);
+                if (match) {
+                  var title = match[0].replace("face", "");
+                }
+                for (let val in that.faces) {
+                  if (that.faces[val].con == title) {
+                    let img = require(`../assets/${val}.gif`);
+                    let h = `<img src="${img}">`;
+                    msg = msg.replace(`face${title}`, h);
+                  }
+                }
+                index = msg.indexOf("face", index + 4);
+              }
+            }
+            let dv = document.createElement("div");
+            if (val.from == userid) {
+              if (msg.indexOf("img:") !== -1) {
+                let img = msg.substr(4);
+                let kk = require("../assets/talk-peo.png");
+                dv.className = "imgs alltxt";
+                dv.innerHTML = `
+                  <img src="${kk}" alt="" class="peoimg" />
+                  <div class="right">
+                    <img src="${img}" alt="" />
+                  </div>
+                `;
+              } else {
+                let img = require('../assets/talk-peo.png')
+                dv.className = "peo alltxt";
+                dv.innerHTML = `
                     <img src="${img}" alt="" />
                         <p class="txt">
                           ${msg}
                         </p>
                   `;
+              }
+            } else {
+              if (msg.indexOf("img:") !== -1) {
+                let img = msg.substr(4);
+                let kk = that.staffimg;
+                dv.className = "imgbox alltxt";
+                dv.innerHTML = `
+                  <img src="${kk}" alt="" class="peoimg" />
+                  <div class="right">
+                    <img src="${img}" alt="" />
+                  </div>
+                `;
+              } else {
+                let img = that.staffimg;
+                dv.className = "you alltxt";
+                dv.innerHTML = `
+                    <div class="left">
+                        <img src="${img}" alt="" />
+                      </div>
+                        <p class="txt">
+                          ${msg}
+                        </p>
+                  `;
+              }
+            }
+            $(".con").append(dv);
           }
-          $(".con").append(dv);
         }
-        if(that.page == 2){
-          let dds = document.getElementsByClassName("alltxt");
-          let dd = dds[dds.length - 1];
-          if (dd) {
-            dd.scrollIntoView();
-          }
+        let kk;
+        let dds = document.getElementsByClassName("alltxt");
+        if (that.page == 2) {
+          kk = dds[dds.length - 1];
+        } else {
+          kk = dds[nn];
+        }
+        if (kk) {
+          kk.scrollIntoView();
         }
       } else if (data.action == 206) {
-        that.cardtype = true;
-        let img = that.staffimg;
-        let dv = document.createElement("div");
-        dv.className = "putcard alltxt";
-        dv.innerHTML = `
-            <img src="${img}" alt="" class="peoimg" />
-            <div class="cardbox">
-              <div class="top">
-                <img src="${img}" alt="" />
-                <div class="top-right">
-                  <h5>${data.staff.name} <span>新房咨询</span></h5>
-                  <p>从业咨询服务6年</p>
+        that.usernum = data.num.user_num;
+        that.looknum = data.num.look_num;
+        that.rate = data.num.rate;
+        that.stafftel = data.staff.tel;
+        that.staffname = data.staff.name;
+      } else if (data.action == 301) {
+        let id = sessionStorage.getItem("userid");
+        if (data.fromUserName == id) {
+          let img = require('../assets/talk-peo.png');
+          let msg = data.content;
+          if (msg == "%get your phone%") {
+            let mm = require("../assets/talk-tel.jpg");
+            let dv = document.createElement("div");
+            dv.className = "gettel alltxt";
+            dv.innerHTML = `
+              <img src="${img}" alt="" class="peoimg" />
+              <div class="telbox">
+                <img src="${mm}" alt="" />
+                <div class="telbox-bom">
+                  <p class="tit">为您制定专属分析报告</p>
+                  <p class="msg">
+                    向咨询师免费领取专属分析报告,内附有购房 流程全盘解读
+                  </p>
+                  <button class="mfbtn">免费领取</button>
                 </div>
               </div>
-              <div class="bom">
-                <div class="txt">
-                  <p class="num"><span>${data.num.user_num}</span>人</p>
-                  <p class="type">服务客户</p>
+              `;
+            $(".con").append(dv);
+            dv.scrollIntoView();
+          } else if (msg == "%put my card%") {
+            let mm = require("../assets/talk-tel.jpg");
+            let dv = document.createElement("div");
+            dv.className = "putcard alltxt";
+            dv.innerHTML = `
+              <img src="${img}" alt="" class="peoimg" />
+              <div class="cardbox">
+                <div class="top">
+                  <img src="${img}" alt="" />
+                  <div class="top-right">
+                    <h5>${that.staffname} <span>新房咨询</span></h5>
+                    <p>从业咨询服务6年</p>
+                  </div>
                 </div>
-                <div class="txt">
-                  <p class="num"><span>${data.num.look_num}</span>次</p>
-                  <p class="type">带看客户</p>
+                <div class="bom">
+                  <div class="txt">
+                    <p class="num"><span>${that.usernum}</span>人</p>
+                    <p class="type">服务客户</p>
+                  </div>
+                  <div class="txt">
+                    <p class="num"><span>${that.looknum}</span>次</p>
+                    <p class="type">带看客户</p>
+                  </div>
+                  <div class="txt">
+                    <p class="num"><span>${that.rate}</span>%</p>
+                    <p class="type">好评率</p>
+                  </div>
                 </div>
-                <div class="txt">
-                  <p class="num"><span>${data.num.rate}</span>%</p>
-                  <p class="type">好评率</p>
-                </div>
+                <a href="tel:${that.stafftel}">
+                <button>电话咨询</button>
+                </a>
               </div>
-              <a href="tel:${data.staff.tel}">
-              <button>电话咨询</button>
-              </a>
-            </div>
+              `;
+            $(".con").append(dv);
+            dv.scrollIntoView();
+          } else if (data.content.indexOf("img:") !== -1) {
+            let dv = document.createElement("div");
+            let img = data.content.substr(4);
+            let kk = require("../assets/talk-peo.png");
+            dv.className = "imgs alltxt";
+            dv.innerHTML = `
+                <img src="${kk}" alt="" class="peoimg" />
+                <div class="right">
+                  <img src="${img}" alt="" />
+                </div>
+              `;
+            $(".con").append(dv);
+            dv.scrollIntoView();
+          } else {
+            if (msg.split("face").length !== 0) {
+              let index = msg.indexOf("face");
+              while (index != -1) {
+                var reg = /face\[[\u4e00-\u9fa5_a-zA-Z]+\]/s;
+                var match = msg.match(reg);
+                if (match) {
+                  var title = match[0].replace("face", "");
+                }
+                for (let val in that.faces) {
+                  if (that.faces[val].con == title) {
+                    let img = require(`../assets/${val}.gif`);
+                    let h = `<img src="${img}">`;
+                    msg = msg.replace(`face${title}`, h);
+                  }
+                }
+                index = msg.indexOf("face", index + 4);
+              }
+            }
+            let dv = document.createElement("div");
+            dv.className = "peo alltxt";
+            dv.innerHTML = `
+              <img src="${img}" alt="" />
+                  <p class="txt">
+                    ${msg}
+                  </p>
             `;
-        $(".con").append(dv);
-        dv.scrollIntoView();
+            $(".con").append(dv);
+            dv.scrollIntoView();
+          }
+        } else {
+          let num = 0;
+          if (sessionStorage.getItem(data.fromUserName)) {
+            num = parseInt(sessionStorage.getItem(data.fromUserName)) + 1;
+          } else {
+            num = 1;
+          }
+          sessionStorage.setItem(data.fromUserName, num);
+        }
       }
     };
 
@@ -665,11 +933,11 @@ export default {
           let ig = ``;
           $(".con").append(dv);
           dv.scrollIntoView();
-          let ll = `img[${imgFile}]`;
+          let ll = `img:${imgFile}`;
           let pp = {
             controller: "chat",
             action: "send",
-            params: { content: ll, username: id },
+            params: { content: ll, username: userid },
           };
           that.ws.send(JSON.stringify(pp));
         };
@@ -678,17 +946,17 @@ export default {
         this.toast("请不要上传超过2M的图片");
       }
     });
-    $('.con').on('scroll',function(){
+    $(".con").on("scroll", function () {
       if ($(this).scrollTop() == 0) {
-        console.log(456)
-        if(that.isok && that.total>100*that.page){
-          that.isok = false
-          let id = sessionStorage.getItem('uuid')
-          let userid = sessionStorage.getItem('userid')
-          that.record(id,userid)
+        console.log(456);
+        if (that.isok && that.total > 100 * that.page) {
+          that.isok = false;
+          let id = sessionStorage.getItem("uuid");
+          let userid = sessionStorage.getItem("userid");
+          that.record(id, userid);
         }
       }
-    })
+    });
   },
   watch: {
     addtxt(val) {
@@ -770,11 +1038,15 @@ header {
     display: flex;
     flex-direction: row-reverse;
     margin-bottom: 1.5rem;
-    img {
+    .left {
       width: 2.5rem;
       margin-left: 1rem;
       height: 2.5rem;
       border-radius: 50%;
+      overflow: hidden;
+      img {
+        width: 2.5rem;
+      }
     }
     .txt {
       color: #fff;
@@ -787,10 +1059,11 @@ header {
       max-width: 14.5rem;
       display: flex;
       align-items: center;
+      word-break: break-all;
       img {
         width: 1rem;
         height: 1rem;
-        margin-left: 0.25rem;
+        margin: 0 0.25rem;
       }
     }
     .txt::after {
@@ -821,6 +1094,11 @@ header {
       position: relative;
       bottom: -0.625rem;
       max-width: 14.5rem;
+      img {
+        width: 1rem;
+        height: 1rem;
+        margin: 0 0.25rem;
+      }
     }
     .txt::after {
       content: "";
@@ -888,6 +1166,7 @@ header {
       width: 2.5rem;
       margin-left: 1rem;
       height: 2.5rem;
+      border-radius: 50%;
     }
     .telbox {
       width: 15rem;
@@ -936,6 +1215,7 @@ header {
       width: 2.5rem;
       margin-left: 1rem;
       height: 2.5rem;
+      border-radius: 50%;
     }
     .cardbox {
       width: 13.125rem;
@@ -950,6 +1230,7 @@ header {
           width: 2.25rem;
           height: 2.25rem;
           margin-right: 0.625rem;
+          border-radius: 50%;
         }
         .top-right {
           h5 {
@@ -1029,6 +1310,23 @@ header {
       width: 2.5rem;
       margin-left: 1rem;
       height: 2.5rem;
+      border-radius: 50%;
+    }
+    .right {
+      img {
+        max-width: 7.5rem;
+      }
+    }
+  }
+  /deep/.imgs {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 1.5rem;
+    .peoimg {
+      width: 2.5rem;
+      margin-right: 1rem;
+      height: 2.5rem;
+      border-radius: 50%;
     }
     .right {
       img {

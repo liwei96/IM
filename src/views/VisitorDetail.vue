@@ -7,7 +7,7 @@
     <div class="con">
       <div class="card">
         <div class="card-top">
-          <img :src="msg.avatar" alt="" />
+          <img src="../assets/talk-peo.png" alt="" />
           <span class="city">{{ msg.city }}</span>
           <span class="type" v-if="istalk">已被邀请</span>
           <span class="status" v-if="msg.visiting == 1">访问中</span>
