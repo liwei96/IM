@@ -568,7 +568,6 @@ export default {
       that.ws.send(JSON.stringify(pp));
     };
     if (this.ws.readyState == 1) {
-      if (sessionStorage.getItem("type")) {
         that.loadbox(id, userid);
         that.isup(userid);
         that.wordlist(id);
@@ -578,7 +577,6 @@ export default {
           params: { uuid: id },
         };
         that.ws.send(JSON.stringify(pp));
-      }
     }
     that.timer = setInterval(() => {
       that.isup(userid);
