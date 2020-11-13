@@ -17,7 +17,7 @@
     </div>
     <div class="con">
       <template v-if="type == 1">
-        <div class="peo" v-for="(item, key) in listmsg" :key="key">
+        <div :class="(item.uuid === currentuuid && currentuuid !== againuuid)?'peo current':'peo'" v-for="(item, key) in listmsg" :key="key">
           <div class="left">
             <img class="peoimg" :src="mup" alt="" @click="godetail(item.uuid)" />
             <p v-if="item.num">{{item.num}}</p>
@@ -78,6 +78,7 @@ export default {
       commlist: [],
       timer: "",
       nums: 0,
+      types:true
     };
   },
   methods: {
@@ -122,31 +123,36 @@ export default {
     },
   },
   mounted() {
+    this.currentuuid = this.$route.query.currentuuid
+    this.againuuid = localStorage.getItem('currentuuid')
+    localStorage.setItem('currentuuid',this.$route.query.currentuuid)
     this.id = sessionStorage.getItem("uuid");
     let that = this;
-    console.log(this.ws);
     this.ws.onopen = function (event) {
       that.list(that.id);
       that.comments(that.id);
     };
-    console.log(this.ws.readyState);
     if (this.ws.readyState == 1) {
       if (sessionStorage.getItem("type")) {
         that.list(that.id);
         that.comments(that.id);
       }
     }
-    console.log(this.ws.readyState)
+
     that.timer = setInterval(() => {
-      that.list(that.id);
-      that.comments(that.id);
-    }, 5000);
+      if(that.types){
+        that.types = false
+        that.list(that.id);
+        // that.comments(that.id);
+      }
+    }, 2000);
     that.ws.onmessage = function (event) {
       let data = JSON.parse(event.data);
       if (data.action == 205) {
+        that.types = true
         let date = new Date();
         for (let val of data.users) {
-          let dd = new Date(val.createtime);
+          let dd = new Date(val.createtime.replace(/\-/g, '/'));
           let time = date - dd;
           if (time / 1000 < 3600 * 24) {
             val.time =
@@ -171,7 +177,7 @@ export default {
       } else if (data.action == 308) {
         let date = new Date();
         for (let val of data.list) {
-          let dd = new Date(val.time);
+          let dd = new Date(val.time.replace(/\-/g, '/'));
           let time = date - dd;
           if (time / 1000 < 3600 * 24) {
             val.time =
@@ -192,6 +198,20 @@ export default {
             val.num = sessionStorage.getItem(val.uuid)
             that.num = true
           }
+          if (sessionStorage.getItem(val.id)) {
+            console.log(sessionStorage.getItem(val.id));
+            val.num = sessionStorage.getItem(val.id);
+          }
+          if(val.content.indexOf('%get your phone%')!== -1) {
+            val.content = '请您报备电话'
+          }else if(val.content.indexOf('%put my card%')!== -1) {
+            val.content = '这是我的名片'
+          }else if(val.content.indexOf('project_card')!== -1) {
+            let msg = JSON.parse(val.content)
+            val.content = '客户浏览了'+msg.name
+          }else if(val.content.length>300) {
+            val.content = '我发送了一张图片'
+          }
         }
         that.commlist = data.list;
       } else if (data.action == 306) {
@@ -202,6 +222,7 @@ export default {
           that.toast("客户已被沟通");
         }
       } else if (data.action == 301) {
+        that.comments(that.id);
         let num = 0;
         if (sessionStorage.getItem(data.fromUserName)) {
           num = parseInt(sessionStorage.getItem(data.fromUserName)) + 1;
@@ -375,6 +396,9 @@ header {
         background-color: #f2f2f2;
       }
     }
+  }
+  .current {
+    background-color: #F2F6FC;
   }
 }
 </style>

@@ -189,6 +189,9 @@
         </div>
       </div>
     </van-popup>
+    <van-popup v-model="show3" :style="{ background: 'rgba(0,0,0,0)' }">
+      <img style="width: 100vw" :src="bigimg" alt="" @click="show3 = false" />
+    </van-popup>
   </div>
 </template>
 <script>
@@ -200,6 +203,8 @@ export default {
   },
   data() {
     return {
+      show3: false,
+      bigimg: "",
       faces: [
         "[微笑]",
         "[嘻嘻]",
@@ -479,7 +484,7 @@ export default {
       let pp = {
         controller: "chat",
         action: "index",
-        params: { staff: id, customer: userid },
+        params: { staff: id, customer: userid, type: 1 },
       };
       this.ws.send(JSON.stringify(pp));
     },
@@ -568,15 +573,15 @@ export default {
       that.ws.send(JSON.stringify(pp));
     };
     if (this.ws.readyState == 1) {
-        that.loadbox(id, userid);
-        that.isup(userid);
-        that.wordlist(id);
-        let pp = {
-          controller: "Staff",
-          action: "info",
-          params: { uuid: id },
-        };
-        that.ws.send(JSON.stringify(pp));
+      that.loadbox(id, userid);
+      that.isup(userid);
+      that.wordlist(id);
+      let pp = {
+        controller: "Staff",
+        action: "info",
+        params: { uuid: id },
+      };
+      that.ws.send(JSON.stringify(pp));
     }
     that.timer = setInterval(() => {
       that.isup(userid);
@@ -590,26 +595,26 @@ export default {
         that.city = data.city;
         that.record(id, userid);
         let pro = data.project_info;
-        if(pro.length>0){
-          let txt = `
-            <img src="${that.userimg}" alt="" />
-          <div class="pro">
-            <img src="${pro.img}" alt="" />
-            <div class="pro-msg">
-              <p class="name">${pro.name}</p>
-              <p class="area">建面 ${pro.area}/m²</p>
-              <p class="price">
-                均价<span><i>${pro.price}</i>元/m²</span>
-              </p>
-            </div>
-          </div>
-          `;
-        let dv = document.createElement("div");
-        dv.innerHTML = txt;
-        dv.className = "peo-pro alltxt";
-        $(".con").append(dv);
-        dv.scrollIntoView();
-        }
+        // if(pro.length>0){
+        //   let txt = `
+        //     <img src="${that.userimg}" alt="" />
+        //   <div class="pro">
+        //     <img src="${pro.img}" alt="" />
+        //     <div class="pro-msg">
+        //       <p class="name">${pro.name}</p>
+        //       <p class="area">建面 ${pro.area}/m²</p>
+        //       <p class="price">
+        //         均价<span><i>${pro.price}</i>元/m²</span>
+        //       </p>
+        //     </div>
+        //   </div>
+        //   `;
+        // let dv = document.createElement("div");
+        // dv.innerHTML = txt;
+        // dv.className = "peo-pro alltxt";
+        // $(".con").append(dv);
+        // dv.scrollIntoView();
+        // }
       } else if (data.action == 304) {
         if (data.visiting == 1) {
           that.status = true;
@@ -639,7 +644,7 @@ export default {
         }
         let dd = new Date();
         if (that.list[0]) {
-          dd = new Date(that.list[0].createtime);
+          dd = new Date(that.list[0].createtime.replace(/\-/g, "/"));
         }
         let date = new Date();
         let time = date - dd;
@@ -715,6 +720,27 @@ export default {
               </div>
               `;
             $(".con").append(dv);
+          } else if (msg.indexOf("project_card") !== -1) {
+            console.log(msg);
+            msg = JSON.parse(msg);
+            let img = require("../assets/talk-peo.png");
+            let txt = `
+                <img src="${img}" alt="" />
+              <div class="pro">
+                <img src="${msg.img}" alt="" />
+                <div class="pro-msg">
+                  <p class="name">${msg.name}</p>
+                  <p class="area">建面 ${msg.area}/m²</p>
+                  <p class="price">
+                    均价<span><i>${msg.price}</i>元/m²</span>
+                  </p>
+                </div>
+              </div>
+              `;
+            let dv = document.createElement("div");
+            dv.innerHTML = txt;
+            dv.className = "peo-pro alltxt";
+            $(".con").append(dv);
           } else {
             if (msg.split("face").length !== 0) {
               let index = msg.indexOf("face");
@@ -741,16 +767,16 @@ export default {
                 let kk = require("../assets/talk-peo.png");
                 dv.className = "imgs alltxt";
                 dv.innerHTML = `
-                  <img src="${kk}" alt="" class="peoimg" />
+                  <img src="${kk}" alt="" class="peoimg godetail" />
                   <div class="right">
-                    <img src="${img}" alt="" />
+                    <img class="bigimg" src="${img}" alt="" />
                   </div>
                 `;
               } else {
-                let img = require('../assets/talk-peo.png')
+                let img = require("../assets/talk-peo.png");
                 dv.className = "peo alltxt";
                 dv.innerHTML = `
-                    <img src="${img}" alt="" />
+                    <img class="godetail" src="${img}" alt="" />
                         <p class="txt">
                           ${msg}
                         </p>
@@ -764,7 +790,7 @@ export default {
                 dv.innerHTML = `
                   <img src="${kk}" alt="" class="peoimg" />
                   <div class="right">
-                    <img src="${img}" alt="" />
+                    <img class="bigimg" src="${img}" alt="" />
                   </div>
                 `;
               } else {
@@ -801,9 +827,18 @@ export default {
         that.staffname = data.staff.name;
       } else if (data.action == 301) {
         let id = sessionStorage.getItem("userid");
+        let isagain = false;
+        for (let val of that.list) {
+          if (val.id === data.message_id) {
+            isagain = true;
+          }
+        }
         if (data.fromUserName == id) {
-          let img = require('../assets/talk-peo.png');
+          let img = require("../assets/talk-peo.png");
           let msg = data.content;
+          if (isagain) {
+            return;
+          }
           if (msg == "%get your phone%") {
             let mm = require("../assets/talk-tel.jpg");
             let dv = document.createElement("div");
@@ -866,9 +901,29 @@ export default {
             dv.innerHTML = `
                 <img src="${kk}" alt="" class="peoimg" />
                 <div class="right">
-                  <img src="${img}" alt="" />
+                  <img class="bigimg" src="${img}" alt="" />
                 </div>
               `;
+            $(".con").append(dv);
+            dv.scrollIntoView();
+          } else if (data.content.indexOf("project_card") !== -1) {
+            let msg = JSON.parse(data.content);
+            let txt = `
+                <img src="${img}" alt="" />
+              <div class="pro">
+                <img src="${msg.img}" alt="" />
+                <div class="pro-msg">
+                  <p class="name">${msg.name}</p>
+                  <p class="area">建面 ${msg.area}/m²</p>
+                  <p class="price">
+                    均价<span><i>${msg.price}</i>元/m²</span>
+                  </p>
+                </div>
+              </div>
+              `;
+            let dv = document.createElement("div");
+            dv.innerHTML = txt;
+            dv.className = "peo-pro alltxt";
             $(".con").append(dv);
             dv.scrollIntoView();
           } else {
@@ -893,7 +948,7 @@ export default {
             let dv = document.createElement("div");
             dv.className = "peo alltxt";
             dv.innerHTML = `
-              <img src="${img}" alt="" />
+              <img class="godetail" src="${img}" alt="" />
                   <p class="txt">
                     ${msg}
                   </p>
@@ -925,7 +980,7 @@ export default {
           dv.innerHTML = `
             <img src="${img}" alt="" class="peoimg" />
             <div class="right">
-              <img src="${imgFile}" alt="">
+              <img class="bigimg" src="${imgFile}" alt="">
             </div>
           `;
           let ig = ``;
@@ -944,6 +999,10 @@ export default {
         this.toast("请不要上传超过2M的图片");
       }
     });
+    $(".con").on("click", ".bigimg", function () {
+      that.bigimg = $(this).attr("src");
+      that.show3 = true;
+    });
     $(".con").on("scroll", function () {
       if ($(this).scrollTop() == 0) {
         console.log(456);
@@ -954,6 +1013,9 @@ export default {
           that.record(id, userid);
         }
       }
+    });
+    $(".con").on("click", ".godetail", function () {
+      that.$router.push("/VisitorDetail");
     });
   },
   watch: {
@@ -1050,12 +1112,11 @@ header {
       color: #fff;
       font-size: 0.875rem;
       padding: 0.75rem 0.625rem;
-      border-radius: 0.1875rem 0 0.1875rem 0.1875rem;
+      border-radius: 0.375rem 0 0.375rem 0.375rem;
       background-color: #52c2cc;
       position: relative;
       bottom: -0.625rem;
-      max-width: 14.5rem;
-      display: flex;
+      max-width: 14rem;
       align-items: center;
       word-break: break-all;
       img {
@@ -1063,15 +1124,18 @@ header {
         height: 1rem;
         margin: 0 0.25rem;
       }
+      a {
+        color: #fff;
+      }
     }
     .txt::after {
       content: "";
       display: block;
       position: absolute;
-      border: 0.375rem solid transparent;
+      border: 1.25rem solid transparent;
       border-top-color: #52c2cc;
       top: 0;
-      right: -0.1875rem;
+      right: -0.625rem;
     }
   }
   /deep/.peo {
@@ -1087,11 +1151,11 @@ header {
       color: #323233;
       font-size: 0.875rem;
       padding: 0.75rem 0.625rem;
-      border-radius: 0.1875rem 0 0.1875rem 0.1875rem;
+      border-radius: 0 0.375rem 0.375rem 0.375rem;
       background-color: #e8eded;
       position: relative;
       bottom: -0.625rem;
-      max-width: 14.5rem;
+      max-width: 14rem;
       img {
         width: 1rem;
         height: 1rem;
@@ -1102,10 +1166,10 @@ header {
       content: "";
       display: block;
       position: absolute;
-      border: 0.375rem solid transparent;
+      border: 1.25rem solid transparent;
       border-top-color: #e8eded;
       top: 0;
-      left: -0.1875rem;
+      left: -0.625rem;
     }
   }
   /deep/.peo-pro {

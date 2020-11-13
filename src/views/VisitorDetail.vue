@@ -72,11 +72,12 @@ export default {
         this.toast('客户已被沟通')
       }
     },
-    detail(id) {
+    detail(id,sid) {
       let pp = {
         controller: "Talker",
         action: "customer",
         params: { uuid: id },
+        sid:sid
       };
       this.ws.send(JSON.stringify(pp));
     },
@@ -94,12 +95,12 @@ export default {
     let id = sessionStorage.getItem("uuid");
     let that = this;
     this.ws.onopen = function (event) {
-      that.detail(useid);
+      that.detail(useid,id);
       that.talk(id, useid);
     };
     if (this.ws.readyState == 1) {
       if (sessionStorage.getItem("type")) {
-        that.detail(useid);
+        that.detail(useid,id);
         that.talk(id, useid);
       }
     }

@@ -18,7 +18,7 @@ export default {
       sessionStorage.setItem('myid',id)
       sessionStorage.setItem('uuid',id)
     }
-    this.ws = new ReconnectingWebSocket('ws://139.155.128.107:9509?uuid='+id);
+    this.ws = new ReconnectingWebSocket('ws://39.98.227.114:9509?uuid='+id);
     this.ws.onopen = function(){
       sessionStorage.setItem('type',1)
     }
