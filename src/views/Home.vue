@@ -246,6 +246,7 @@ export default {
     };
   },
   beforeDestroy() {
+    console.log('555')
     console.log(45);
     clearInterval(this.timer);
   },

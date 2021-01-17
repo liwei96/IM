@@ -98,6 +98,8 @@ export default {
       that.detail(useid,id);
       that.talk(id, useid);
     };
+    that.detail(useid,id);
+    that.talk(id, useid);
     if (this.ws.readyState == 1) {
       if (sessionStorage.getItem("type")) {
         that.detail(useid,id);
