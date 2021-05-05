@@ -327,10 +327,10 @@ export default {
       this.type = !this.type;
     },
     addbtn() {
-      if (this.words.length < 5) {
+      if (this.words.length < 10) {
         this.show = true;
       } else {
-        this.toast("常用语最多5条");
+        this.toast("常用语最多10条");
       }
     },
     gettel() {

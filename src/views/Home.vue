@@ -2,7 +2,7 @@
   <div class="home">
     <div class="top">
       <header>
-        <img src="../assets/goback.png" alt="" />
+        <img src="../assets/goback.png" alt="" @click="goback"/>
         访客接待
       </header>
       <ul class="nav">
@@ -82,6 +82,9 @@ export default {
     };
   },
   methods: {
+    goback() {
+      this.$router.go(-1)
+    },
     godetail(uuid) {
       this.$router.push("/VisitorDetail");
       sessionStorage.setItem("userid", uuid);
