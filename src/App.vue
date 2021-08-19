@@ -14,6 +14,7 @@ export default {
   },
   created(){
     let id = (this.$route.query.id || sessionStorage.getItem('myid'))
+    console.log(id,this.$route.query.id,this.$route.query)
     if(id){
       sessionStorage.setItem('myid',id)
       sessionStorage.setItem('uuid',id)

@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import newtalk from '../views/newtalk.vue'
 
 Vue.use(VueRouter)
 
@@ -24,6 +25,11 @@ const routes = [
     path: '/Talk',
     name: 'Talk',
     component: () => import('../views/Talk.vue')
+  },
+  {
+    path: '/newtalk',
+    name: 'newtalk',
+    component: newtalk
   }
 ]
 
